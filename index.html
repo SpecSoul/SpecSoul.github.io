@@ -1,0 +1,1663 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark" data-fontstyle="system" data-fontsize="normal" data-anim="on">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🎨 MC 皮肤包生成器 · Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+/* ==================== 基础 ==================== */
+:root{
+  --bg:#0b0e14; --bg-soft:#11151d;
+  --panel:rgba(255,255,255,.035); --panel-hi:rgba(255,255,255,.065);
+  --border:rgba(255,255,255,.09); --border-hi:rgba(255,255,255,.18);
+  --text:#e9edf5; --text-dim:#8a93a6; --text-mute:#5d6577;
+  --accent:#4ade80; --accent-2:#22d3ee; --accent-3:#a78bfa;
+  --danger:#f87171; --warn:#fbbf24;
+  --radius:16px; --radius-sm:10px;
+  --shadow:0 20px 50px rgba(0,0,0,.55);
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'HarmonyOS Sans SC', 'Microsoft YaHei', sans-serif;
+}
+html[data-theme="light"]{
+  --bg:#f2f5fa; --bg-soft:#ffffff;
+  --panel:rgba(255,255,255,.82); --panel-hi:#ffffff;
+  --border:rgba(16,24,40,.09); --border-hi:rgba(16,24,40,.18);
+  --text:#101828; --text-dim:#667085; --text-mute:#98a2b3;
+  --accent:#16a34a; --accent-2:#0891b2; --accent-3:#7c3aed;
+  --shadow:0 18px 40px rgba(16,24,40,.12);
+}
+html[data-fontstyle="mc"] body, html[data-fontstyle="mc"] input,
+html[data-fontstyle="mc"] button, html[data-fontstyle="mc"] textarea{
+  font-family:'Press Start 2P','Courier New',monospace !important;
+}
+html[data-fontsize="small"] body{font-size:13px}
+html[data-fontsize="normal"] body{font-size:14px}
+html[data-fontsize="large"] body{font-size:16px}
+
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:var(--font); background:var(--bg); color:var(--text);
+  min-height:100vh; overflow-x:hidden; -webkit-font-smoothing:antialiased;
+  transition:background .35s ease, color .35s ease;
+}
+button,input{font-family:inherit}
+::selection{background:rgba(74,222,128,.3)}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border-hi);border-radius:9px}
+::-webkit-scrollbar-thumb:hover{background:var(--accent)}
+
+/* ==================== 背景光斑 ==================== */
+.bg-orb{position:fixed;border-radius:50%;pointer-events:none;z-index:0;
+  background:radial-gradient(circle,rgba(74,222,128,.30),transparent 70%);}
+.orb-1{width:640px;height:640px;top:-260px;left:-200px}
+.orb-2{width:560px;height:560px;top:4%;right:-240px;background:radial-gradient(circle,rgba(34,211,238,.24),transparent 70%)}
+.orb-3{width:700px;height:700px;bottom:-320px;left:28%;background:radial-gradient(circle,rgba(167,139,250,.18),transparent 70%)}
+html[data-theme="light"] .bg-orb{opacity:.55}
+html[data-anim="on"] .orb-1{animation:orbFloat 24s ease-in-out infinite}
+html[data-anim="on"] .orb-2{animation:orbFloat 30s ease-in-out infinite reverse}
+html[data-anim="on"] .orb-3{animation:orbFloat 36s ease-in-out infinite}
+@keyframes orbFloat{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(40px,-40px) scale(1.08)}}
+.bg-grid{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);
+  background-size:44px 44px;opacity:.55;
+  -webkit-mask-image:radial-gradient(ellipse 90% 60% at 50% 0%,#000 10%,transparent 80%);
+  mask-image:radial-gradient(ellipse 90% 60% at 50% 0%,#000 10%,transparent 80%);}
+
+/* ==================== 布局 ==================== */
+.app{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:0 20px 90px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:22px 0 24px;position:sticky;top:0;z-index:60;
+  background:linear-gradient(to bottom,var(--bg) 55%,transparent);}
+.brand{display:flex;align-items:center;gap:13px;min-width:0}
+.brand-logo{width:46px;height:46px;flex-shrink:0;border-radius:14px;display:grid;place-items:center;font-size:22px;
+  background:linear-gradient(135deg,rgba(74,222,128,.25),rgba(34,211,238,.18));
+  border:1px solid rgba(74,222,128,.4);box-shadow:0 0 32px rgba(74,222,128,.22);}
+.brand h1{font-size:17px;font-weight:700;letter-spacing:.3px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand p{font-size:11px;color:var(--text-dim);letter-spacing:.7px;margin-top:2px}
+.topbar-actions{display:flex;gap:9px}
+.icon-btn{width:42px;height:42px;border-radius:12px;border:1px solid var(--border);
+  background:var(--panel);color:var(--text);font-size:17px;cursor:pointer;
+  display:grid;place-items:center;transition:all .22s cubic-bezier(.4,0,.2,1);backdrop-filter:blur(10px)}
+.icon-btn:hover{background:var(--panel-hi);border-color:var(--accent);color:var(--accent);transform:translateY(-2px)}
+.icon-btn:active{transform:translateY(0) scale(.96)}
+
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 372px;gap:22px;align-items:start}
+@media(max-width:920px){.layout{grid-template-columns:1fr}}
+.col-side{display:flex;flex-direction:column;gap:14px}
+@media(min-width:921px){.col-side{position:sticky;top:92px;max-height:calc(100vh - 110px);overflow-y:auto;padding-right:2px}}
+
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
+  padding:18px;backdrop-filter:blur(14px);box-shadow:var(--shadow)}
+.card-title{font-size:12px;font-weight:700;letter-spacing:.5px;color:var(--text-dim);
+  display:flex;align-items:center;gap:8px;margin-bottom:14px;text-transform:uppercase}
+
+/* ==================== 上传区 ==================== */
+.upload-zone{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:8px;padding:38px 22px;border:2px dashed var(--border-hi);border-radius:20px;cursor:pointer;
+  background:var(--panel);transition:all .28s cubic-bezier(.4,0,.2,1);text-align:center;
+  backdrop-filter:blur(12px);overflow:hidden}
+.upload-zone::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 0%,rgba(74,222,128,.12),transparent 65%);
+  opacity:0;transition:opacity .3s}
+.upload-zone:hover,.upload-zone.dragging{border-color:var(--accent);transform:translateY(-3px);
+  box-shadow:0 16px 46px rgba(74,222,128,.16)}
+.upload-zone:hover::before,.upload-zone.dragging::before{opacity:1}
+.upload-icon{width:56px;height:56px;border-radius:18px;display:grid;place-items:center;font-size:26px;
+  background:linear-gradient(135deg,rgba(74,222,128,.2),rgba(34,211,238,.14));
+  border:1px solid rgba(74,222,128,.3);margin-bottom:4px;transition:transform .3s}
+.upload-zone:hover .upload-icon{transform:translateY(-4px) scale(1.06)}
+.upload-title{font-size:14px;font-weight:600;letter-spacing:.2px}
+.upload-sub{font-size:11.5px;color:var(--text-dim)}
+.upload-chips{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;justify-content:center}
+.upload-chips span{font-size:10.5px;padding:4px 10px;border-radius:8px;
+  background:rgba(74,222,128,.10);border:1px solid rgba(74,222,128,.28);color:var(--accent);font-weight:600}
+input[type="file"]{display:none}
+
+.features-strip{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.features-strip span{font-size:11px;color:var(--text-mute);padding:5px 11px;border-radius:9px;
+  background:var(--panel);border:1px solid var(--border)}
+
+/* ==================== 列表 ==================== */
+.list-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:26px 0 12px}
+.list-title{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:700}
+.count-badge{min-width:24px;height:22px;padding:0 8px;border-radius:8px;display:grid;place-items:center;
+  font-size:11px;font-weight:700;background:rgba(74,222,128,.16);color:var(--accent);
+  border:1px solid rgba(74,222,128,.32)}
+.list-actions{display:flex;gap:8px}
+.ghost-btn{padding:7px 13px;border-radius:10px;border:1px solid var(--border);background:transparent;
+  color:var(--text-dim);font-size:11.5px;font-weight:600;cursor:pointer;transition:all .2s}
+.ghost-btn:hover{background:var(--panel-hi);color:var(--text);border-color:var(--border-hi)}
+.ghost-btn.danger:hover{color:var(--danger);border-color:rgba(248,113,113,.5);background:rgba(248,113,113,.1)}
+
+.skin-list{display:flex;flex-direction:column;gap:10px}
+.skin-card{border-radius:14px;border:1px solid var(--border);background:var(--panel);
+  transition:all .22s cubic-bezier(.4,0,.2,1);animation:cardIn .32s cubic-bezier(.4,0,.2,1) both;
+  overflow:hidden}
+@keyframes cardIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+.skin-card:hover{border-color:var(--border-hi);background:var(--panel-hi);
+  box-shadow:0 10px 28px rgba(0,0,0,.28)}
+.skin-card.dragging{opacity:.4}
+.skin-card.drag-over{border-color:var(--accent);background:rgba(74,222,128,.07)}
+.skin-card.invalid{border-color:rgba(251,191,36,.4)}
+
+.skin-card-main{display:grid;grid-template-columns:18px 64px minmax(0,1fr) auto;
+  gap:14px;align-items:center;padding:12px 14px}
+.drag-handle{cursor:grab;color:var(--text-mute);font-size:15px;text-align:center;user-select:none;transition:color .2s}
+.skin-card:hover .drag-handle{color:var(--accent)}
+.drag-handle:active{cursor:grabbing}
+.preview-wrap{border-radius:10px;overflow:hidden;background:
+  repeating-conic-gradient(rgba(255,255,255,.045) 0% 25%,transparent 0% 50%) 50%/12px 12px;
+  border:1px solid var(--border);display:grid;place-items:center}
+html[data-theme="light"] .preview-wrap{background:repeating-conic-gradient(rgba(0,0,0,.045) 0% 25%,transparent 0% 50%) 50%/12px 12px}
+.skin-preview{width:64px;height:128px;display:block;image-rendering:pixelated}
+.skin-info{min-width:0;display:flex;flex-direction:column;gap:7px}
+.skin-name{width:100%;padding:8px 11px;border-radius:9px;border:1px solid var(--border);
+  background:rgba(0,0,0,.18);color:var(--text);font-size:12.5px;font-weight:600;outline:none;transition:all .2s}
+html[data-theme="light"] .skin-name{background:#fff}
+.skin-name:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(74,222,128,.14)}
+.skin-name::placeholder{color:var(--text-mute);font-weight:400}
+.skin-tags{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:.3px;
+  background:rgba(255,255,255,.06);color:var(--text-dim);border:1px solid var(--border)}
+.tag.ok{background:rgba(74,222,128,.14);color:var(--accent);border-color:rgba(74,222,128,.32)}
+.tag.bad{background:rgba(251,191,36,.14);color:var(--warn);border-color:rgba(251,191,36,.32)}
+
+.segmented{display:inline-flex;padding:2px;border-radius:9px;background:rgba(0,0,0,.2);
+  border:1px solid var(--border);gap:2px}
+html[data-theme="light"] .segmented{background:rgba(16,24,40,.05)}
+.segmented button{border:none;background:transparent;color:var(--text-dim);
+  font-size:11px;font-weight:600;padding:5px 12px;border-radius:7px;cursor:pointer;transition:all .18s;white-space:nowrap}
+.segmented button:hover{color:var(--text)}
+.segmented button.active{background:linear-gradient(135deg,var(--accent),#22c55e);color:#04140a;
+  box-shadow:0 2px 10px rgba(74,222,128,.3)}
+.segmented.small button{font-size:10.5px;padding:4px 10px}
+
+.skin-actions{display:flex;flex-direction:column;gap:6px;flex-shrink:0}
+.cube-btn,.remove-btn{width:32px;height:32px;border-radius:9px;border:1px solid var(--border);
+  background:transparent;color:var(--text-mute);cursor:pointer;transition:all .2s;
+  display:grid;place-items:center;flex-shrink:0}
+.cube-btn svg{width:16px;height:16px}
+.cube-btn:hover{color:var(--accent);border-color:var(--accent);background:rgba(74,222,128,.1);transform:translateY(-1px)}
+.cube-btn.active{color:#04140a;border-color:var(--accent);
+  background:linear-gradient(135deg,var(--accent),#22c55e);
+  box-shadow:0 4px 14px rgba(74,222,128,.4)}
+.remove-btn{font-size:13px}
+.remove-btn:hover{color:var(--danger);border-color:rgba(248,113,113,.55);background:rgba(248,113,113,.12);
+  transform:rotate(90deg)}
+
+/* ==================== 3D 预览 ==================== */
+.skin-card-3d{display:none;margin:0 14px 14px;padding-top:14px;border-top:1px dashed var(--border)}
+.skin-card-3d.show{display:block;animation:cardIn .3s cubic-bezier(.4,0,.2,1) both}
+.p3d-stage{position:relative;height:280px;border-radius:14px;overflow:hidden;
+  cursor:grab;user-select:none;touch-action:none;border:1px solid var(--border);
+  background:
+    radial-gradient(circle at 50% 45%,rgba(74,222,128,.10),transparent 62%),
+    repeating-conic-gradient(rgba(255,255,255,.02) 0% 25%,transparent 0% 50%) 50%/28px 28px;
+  perspective:1000px;perspective-origin:50% 45%}
+html[data-theme="light"] .p3d-stage{
+  background:
+    radial-gradient(circle at 50% 45%,rgba(22,163,74,.10),transparent 62%),
+    repeating-conic-gradient(rgba(0,0,0,.025) 0% 25%,transparent 0% 50%) 50%/28px 28px}
+.p3d-stage:active{cursor:grabbing}
+.p3d-hint{position:absolute;bottom:9px;left:0;right:0;text-align:center;
+  font-size:10.5px;color:var(--text-mute);pointer-events:none;letter-spacing:.3px}
+.p3d-model{position:absolute;left:50%;top:50%;transform-style:preserve-3d;will-change:transform;
+  transform-origin: 0 0 0;}
+.p3d-part{position:absolute;left:0;top:0;width:0;height:0;transform-style:preserve-3d}
+.p3d-face{position:absolute;left:0;top:0;background-size:100% 100%;background-repeat:no-repeat;
+  image-rendering:pixelated;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;
+  backface-visibility:hidden;outline:1px solid transparent;transform-style:preserve-3d}
+
+.p3d-face[data-face="right"] { filter: brightness(0.75); }
+.p3d-face[data-face="left"]  { filter: brightness(0.75); }
+.p3d-face[data-face="back"]  { filter: brightness(0.55); }
+.p3d-face[data-face="bottom"]{ filter: brightness(0.45); }
+.p3d-face[data-face="top"]   { filter: brightness(1.15); }
+
+@media(max-width:520px){
+  .skin-card-main{grid-template-columns:52px minmax(0,1fr) auto;gap:11px;padding:11px}
+  .drag-handle{display:none}
+  .skin-preview{width:52px;height:104px}
+  .p3d-stage{height:240px}
+  .skin-card-3d{margin:0 11px 11px}
+}
+
+/* ==================== 侧栏表单 ==================== */
+.field{margin-bottom:14px}
+.field:last-child{margin-bottom:0}
+.field label{display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:600;
+  color:var(--text-dim);margin-bottom:7px;letter-spacing:.2px}
+.field input[type="text"]{width:100%;padding:11px 13px;border-radius:11px;border:1px solid var(--border);
+  background:rgba(0,0,0,.2);color:var(--text);font-size:13px;outline:none;transition:all .2s}
+html[data-theme="light"] .field input[type="text"]{background:#fff}
+.field input[type="text"]:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(74,222,128,.14)}
+.field input[type="text"]::placeholder{color:var(--text-mute)}
+
+.generate-btn{width:100%;padding:16px;border-radius:14px;border:1px solid rgba(74,222,128,.5);
+  background:linear-gradient(135deg,#4ade80,#22c55e);color:#04140a;
+  font-size:14px;font-weight:800;letter-spacing:.4px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  transition:all .25s cubic-bezier(.4,0,.2,1);box-shadow:0 10px 30px rgba(74,222,128,.28)}
+.generate-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 16px 40px rgba(74,222,128,.42)}
+.generate-btn:active:not(:disabled){transform:translateY(0) scale(.99)}
+.generate-btn:disabled{opacity:.4;cursor:not-allowed;background:var(--panel);color:var(--text-mute);
+  border-color:var(--border);box-shadow:none}
+
+.progress-wrap{display:none;margin-top:4px}
+.progress-wrap.show{display:block;animation:cardIn .3s both}
+.progress-track{height:9px;border-radius:9px;background:rgba(0,0,0,.28);overflow:hidden;border:1px solid var(--border)}
+html[data-theme="light"] .progress-track{background:rgba(16,24,40,.08)}
+.progress-fill{height:100%;width:0;border-radius:9px;
+  background:linear-gradient(90deg,#4ade80,#22d3ee);transition:width .35s cubic-bezier(.4,0,.2,1);
+  box-shadow:0 0 14px rgba(74,222,128,.6)}
+.progress-text{font-size:11px;color:var(--text-dim);text-align:center;margin-top:8px;font-variant-numeric:tabular-nums}
+
+/* ==================== 结果 ==================== */
+.result-card{display:none}
+.result-card.show{display:block;animation:cardIn .38s cubic-bezier(.4,0,.2,1) both}
+.result-head{display:flex;align-items:center;gap:11px;margin-bottom:14px}
+.result-icon{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:19px;
+  background:rgba(74,222,128,.16);border:1px solid rgba(74,222,128,.4);color:var(--accent)}
+.result-title{font-size:14px;font-weight:700;color:var(--accent)}
+.result-rows{display:flex;flex-direction:column;gap:7px;margin-bottom:14px}
+.result-row{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:9px 12px;border-radius:9px;background:rgba(0,0,0,.18);border:1px solid var(--border)}
+html[data-theme="light"] .result-row{background:rgba(16,24,40,.04)}
+.result-row .k{font-size:11.5px;color:var(--text-dim);flex-shrink:0}
+.result-row .v{font-size:11.5px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;font-variant-numeric:tabular-nums}
+.download-btn{width:100%;padding:13px;border-radius:12px;border:1px solid rgba(34,211,238,.45);
+  background:linear-gradient(135deg,rgba(34,211,238,.18),rgba(74,222,128,.18));
+  color:var(--text);font-size:13px;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;transition:all .22s}
+.download-btn:hover{background:linear-gradient(135deg,rgba(34,211,238,.3),rgba(74,222,128,.3));
+  transform:translateY(-2px);box-shadow:0 10px 28px rgba(34,211,238,.22)}
+
+/* ==================== 历史 ==================== */
+.history-card{display:none}
+.history-card.show{display:block;animation:cardIn .35s both}
+.history-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.history-title{font-size:12px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;text-transform:uppercase}
+.history-clear{font-size:10.5px;font-weight:600;color:var(--text-mute);background:transparent;border:none;
+  cursor:pointer;padding:4px 8px;border-radius:7px;transition:all .2s}
+.history-clear:hover{color:var(--danger);background:rgba(248,113,113,.12)}
+.history-list{display:flex;flex-direction:column;gap:7px;max-height:230px;overflow-y:auto}
+.history-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;
+  border:1px solid var(--border);background:rgba(0,0,0,.14);cursor:pointer;transition:all .2s}
+html[data-theme="light"] .history-item{background:rgba(16,24,40,.03)}
+.history-item:hover{border-color:var(--accent);background:rgba(74,222,128,.08);transform:translateX(2px)}
+.history-item .hi{flex:1;min-width:0}
+.history-item .hn{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.history-item .ht{font-size:10px;color:var(--text-mute);margin-top:2px}
+.history-item .hb{font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;flex-shrink:0;
+  background:rgba(74,222,128,.14);color:var(--accent);border:1px solid rgba(74,222,128,.3)}
+
+/* ==================== 运行日志 ==================== */
+.log-card{padding:0;overflow:hidden}
+.log-head{display:flex;align-items:center;justify-content:space-between;
+  padding:12px 16px;border-bottom:1px solid var(--border);background:rgba(0,0,0,.1)}
+.log-title{font-size:11.5px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px}
+.log-title::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--accent);
+  box-shadow:0 0 8px var(--accent);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.log-clear{font-size:10px;color:var(--text-mute);background:none;border:none;cursor:pointer}
+.log-clear:hover{color:var(--text)}
+.log-content{height:180px;overflow-y:auto;padding:10px 12px;background:#080a0f;
+  font-family:'Consolas', 'Courier New', monospace;font-size:11px;line-height:1.6;
+  scroll-behavior:smooth}
+html[data-theme="light"] .log-content{background:#f8f9fb}
+.log-line{display:flex;gap:8px;margin-bottom:3px;word-break:break-all}
+.log-time{color:#4b5563;flex-shrink:0}
+.log-type{font-weight:bold;flex-shrink:0;width:52px}
+.log-msg{color:#d1d5db}
+html[data-theme="light"] .log-msg{color:#374151}
+
+.log-line.info .log-type{color:#60a5fa}
+.log-line.success .log-type{color:#4ade80}
+.log-line.warn .log-type{color:#fbbf24}
+.log-line.error .log-type{color:#f87171}
+
+/* ==================== 抽屉 ==================== */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);
+  z-index:900;opacity:0;visibility:hidden;transition:all .3s}
+.overlay.show{opacity:1;visibility:visible}
+.drawer{position:fixed;top:0;left:0;bottom:0;width:min(88%,370px);z-index:901;
+  background:var(--bg-soft);border-right:1px solid var(--border);
+  transform:translateX(-102%);transition:transform .38s cubic-bezier(.4,0,.2,1);
+  overflow-y:auto;padding:22px 20px 40px;box-shadow:20px 0 60px rgba(0,0,0,.5)}
+.drawer.show{transform:translateX(0)}
+.drawer-head{display:flex;align-items:center;justify-content:space-between;
+  padding-bottom:16px;margin-bottom:8px;border-bottom:1px solid var(--border)}
+.drawer-head h2{font-size:15px;font-weight:700;display:flex;align-items:center;gap:9px}
+.drawer-close{width:34px;height:34px;border-radius:10px;border:1px solid var(--border);
+  background:transparent;color:var(--text-dim);font-size:14px;cursor:pointer;transition:all .2s;
+  display:grid;place-items:center}
+.drawer-close:hover{color:var(--danger);border-color:rgba(248,113,113,.5);background:rgba(248,113,113,.1)}
+.drawer-section{padding:16px 0;border-bottom:1px solid var(--border)}
+.drawer-section:last-child{border-bottom:none}
+.drawer-section h3{font-size:10.5px;font-weight:700;color:var(--text-mute);letter-spacing:1px;
+  text-transform:uppercase;margin-bottom:14px}
+.drawer-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:9px 0}
+.drawer-row .lbl{font-size:12.5px;font-weight:600;color:var(--text)}
+.drawer-row .lbl small{display:block;font-size:10.5px;font-weight:400;color:var(--text-mute);margin-top:3px}
+.switch{position:relative;width:46px;height:26px;flex-shrink:0;cursor:pointer}
+.switch input{opacity:0;width:0;height:0;position:absolute}
+.switch .sl{position:absolute;inset:0;background:rgba(255,255,255,.12);border:1px solid var(--border-hi);
+  border-radius:26px;transition:.28s}
+html[data-theme="light"] .switch .sl{background:rgba(16,24,40,.12)}
+.switch .sl::before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;border-radius:50%;
+  background:var(--text-dim);transition:.28s cubic-bezier(.4,0,.2,1)}
+.switch input:checked + .sl{background:rgba(74,222,128,.28);border-color:var(--accent)}
+.switch input:checked + .sl::before{transform:translateX(20px);background:var(--accent)}
+.reset-btn{width:100%;padding:12px;border-radius:11px;border:1px solid rgba(248,113,113,.4);
+  background:rgba(248,113,113,.08);color:var(--danger);font-size:12.5px;font-weight:700;
+  cursor:pointer;transition:all .2s}
+.reset-btn:hover{background:rgba(248,113,113,.2);transform:translateY(-1px)}
+
+/* ==================== Toast ==================== */
+#toasts{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:9999;
+  display:flex;flex-direction:column;gap:9px;align-items:center;pointer-events:none;
+  width:max-content;max-width:90vw}
+.toast{padding:12px 20px;border-radius:12px;font-size:12.5px;font-weight:600;
+  background:rgba(20,25,34,.95);color:#fff;border:1px solid var(--border-hi);
+  box-shadow:0 14px 40px rgba(0,0,0,.5);backdrop-filter:blur(14px);
+  opacity:0;transform:translateY(14px) scale(.96);transition:all .3s cubic-bezier(.4,0,.2,1)}
+.toast.show{opacity:1;transform:none}
+.toast.ok{border-color:rgba(74,222,128,.6);color:#4ade80}
+.toast.warn{border-color:rgba(251,191,36,.6);color:#fbbf24}
+.toast.bad{border-color:rgba(248,113,113,.6);color:#f87171}
+
+/* ==================== 页脚 ==================== */
+.footer{text-align:center;padding:34px 0 10px;color:var(--text-mute);font-size:11px;letter-spacing:.3px}
+.footer b{color:var(--text-dim);font-weight:600}
+</style>
+</head>
+<body>
+
+<div class="bg-orb orb-1"></div>
+<div class="bg-orb orb-2"></div>
+<div class="bg-orb orb-3"></div>
+<div class="bg-grid"></div>
+
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-logo">🎨</div>
+      <div>
+        <h1 data-i18n="title">MC 皮肤包生成器</h1>
+        <p>Minecraft Bedrock Edition · Skin Pack</p>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button class="icon-btn" id="openSettingsBtn" title="设置">⚙</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- ========== 主列 ========== -->
+    <div class="col-main">
+      <label class="upload-zone" id="uploadZone" for="fileInput">
+        <div class="upload-icon">⬆</div>
+        <div class="upload-title" data-i18n="uploadText">点击或拖拽上传皮肤 PNG / ZIP</div>
+        <div class="upload-sub" data-i18n="uploadHint">支持 64×64 · 64×32 · 128×128，可批量</div>
+        <div class="upload-chips">
+          <span>PNG</span><span>ZIP</span><span data-i18n="batchChip">批量</span>
+        </div>
+        <input type="file" id="fileInput" multiple accept="image/png,image/*,.zip,application/zip">
+      </label>
+
+      <div class="features-strip">
+        <span>✦ <b data-i18n="f1">批量上传</b></span>
+        <span>✦ <b data-i18n="f2">尺寸校验</b></span>
+        <span>✦ <b data-i18n="f3">粗臂 / 细臂</b></span>
+        <span>✦ <b data-i18n="f4">自定义名称</b></span>
+        <span>✦ <b data-i18n="f5">3D 预览</b></span>
+      </div>
+
+      <div class="list-header">
+        <div class="list-title">
+          <span data-i18n="skinListTitle">皮肤列表</span>
+          <span class="count-badge" id="skinCount">0</span>
+        </div>
+        <div class="list-actions">
+          <button class="ghost-btn" id="autoNameBtn" data-i18n="autoName">自动命名</button>
+          <button class="ghost-btn danger" id="clearAllBtn" data-i18n="clearAll">清空</button>
+        </div>
+      </div>
+
+      <div class="skin-list" id="skinsList"></div>
+    </div>
+
+    <!-- ========== 侧列 ========== -->
+    <aside class="col-side">
+      <div class="card">
+        <div class="card-title"><span>📦</span><span data-i18n="packSettingsTitle">皮肤包信息</span></div>
+        <div class="field">
+          <label><span data-i18n="packNameLabel">皮肤包名称</span></label>
+          <input type="text" id="packNameInput" maxlength="60" placeholder="例如：我的皮肤合集" value="我的皮肤包">
+        </div>
+        <div class="field">
+          <label><span data-i18n="packDescLabel">皮肤包简介</span></label>
+          <input type="text" id="packDescInput" maxlength="120" placeholder="例如：精选皮肤合集" value="由 MC 皮肤包生成器制作">
+        </div>
+      </div>
+
+      <button class="generate-btn" id="generateBtn" disabled>
+        <span>🚀</span><span data-i18n="generateBtn">生成皮肤包</span>
+      </button>
+
+      <div class="progress-wrap" id="progressWrap">
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-text" id="progressText"></div>
+      </div>
+
+      <div class="card result-card" id="resultBox">
+        <div class="result-head">
+          <div class="result-icon">✓</div>
+          <div class="result-title" data-i18n="resultTitle">生成成功！</div>
+        </div>
+        <div class="result-rows">
+          <div class="result-row"><span class="k" data-i18n="fileNameLabel">文件名</span><span class="v" id="resultFileName">—</span></div>
+          <div class="result-row"><span class="k" data-i18n="skinCountLabel">皮肤数</span><span class="v" id="resultSkinCount">—</span></div>
+          <div class="result-row"><span class="k" data-i18n="fileSizeLabel">文件大小</span><span class="v" id="resultSize">—</span></div>
+        </div>
+        <button class="download-btn" id="downloadBtn">
+          <span>⬇</span><span data-i18n="downloadBtn">下载皮肤包</span>
+        </button>
+      </div>
+
+      <div class="card log-card">
+        <div class="log-head">
+          <div class="log-title" data-i18n="logTitle">系统运行日志</div>
+          <button class="log-clear" id="logClearBtn" data-i18n="logClear">清空</button>
+        </div>
+        <div class="log-content" id="logContent"></div>
+      </div>
+
+      <div class="card history-card" id="historyPanel">
+        <div class="history-head">
+          <div class="history-title" data-i18n="historyTitle">最近生成</div>
+          <button class="history-clear" id="historyClearBtn" data-i18n="historyClear">清空</button>
+        </div>
+        <div class="history-list" id="historyList"></div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="footer">
+    <b>MC Skin Pack Generator</b> · v2.3.0 · Made for Bedrock Edition
+  </div>
+</div>
+
+<!-- ========== 设置抽屉 ========== -->
+<div class="overlay" id="settingsOverlay"></div>
+<div class="drawer" id="settingsDrawer">
+  <div class="drawer-head">
+    <h2><span>⚙</span><span data-i18n="drawerTitle">设置</span></h2>
+    <button class="drawer-close" id="closeSettingsBtn">✕</button>
+  </div>
+
+  <div class="drawer-section">
+    <h3 data-i18n="langSection">语言 / Language</h3>
+    <div class="drawer-row">
+      <div class="lbl" data-i18n="langLabel">界面语言</div>
+      <div class="segmented">
+        <button data-lang="zh" class="active">中文</button>
+        <button data-lang="en">EN</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="drawer-section">
+    <h3 data-i18n="displaySection">显示</h3>
+    <div class="drawer-row">
+      <div class="lbl"><span data-i18n="fontStyleLabel">字体风格</span><small data-i18n="fontStyleHint">系统 / MC 像素</small></div>
+      <div class="segmented">
+        <button data-fontstyle="system" class="active" data-i18n="fontStyleSystem">系统</button>
+        <button data-fontstyle="mc" data-i18n="fontStyleMC">像素</button>
+      </div>
+    </div>
+    <div class="drawer-row">
+      <div class="lbl" data-i18n="fontLabel">字号</div>
+      <div class="segmented">
+        <button data-font="small" data-i18n="fontSmall">小</button>
+        <button data-font="normal" class="active" data-i18n="fontNormal">中</button>
+        <button data-font="large" data-i18n="fontLarge">大</button>
+      </div>
+    </div>
+    <div class="drawer-row">
+      <div class="lbl"><span data-i18n="themeLabel">主题</span><small data-i18n="themeHint">深色 / 浅色</small></div>
+      <div class="segmented">
+        <button data-theme="dark" class="active" data-i18n="themeDark">深色</button>
+        <button data-theme="light" data-i18n="themeLight">浅色</button>
+      </div>
+    </div>
+    <div class="drawer-row">
+      <div class="lbl"><span data-i18n="animLabel">背景动画 / 3D 自动旋转</span><small data-i18n="animHint">关闭可提升流畅度</small></div>
+      <label class="switch">
+        <input type="checkbox" id="optAnimation" checked>
+        <span class="sl"></span>
+      </label>
+    </div>
+  </div>
+
+  <div class="drawer-section">
+    <h3 data-i18n="dataSection">数据</h3>
+    <button class="reset-btn" id="resetSettingsBtn" data-i18n="resetBtn">重置所有设置</button>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+/* ============================================================
+   MC 皮肤包生成器 · v2.3  (新增运行日志系统)
+   ============================================================ */
+
+/* ---------- i18n ---------- */
+const I18N = {
+  zh: {
+    title: 'MC 皮肤包生成器',
+    uploadText: '点击或拖拽上传皮肤 PNG / ZIP',
+    uploadHint: '支持 64×64 · 64×32 · 128×128，可批量',
+    batchChip: '批量',
+    f1: '批量上传', f2: '尺寸校验', f3: '粗臂 / 细臂', f4: '自定义名称', f5: '3D 预览',
+    skinListTitle: '皮肤列表',
+    autoName: '自动命名',
+    clearAll: '清空',
+    packSettingsTitle: '皮肤包信息',
+    packNameLabel: '皮肤包名称',
+    packDescLabel: '皮肤包简介',
+    generateBtn: '生成皮肤包',
+    resultTitle: '生成成功！',
+    fileNameLabel: '文件名',
+    skinCountLabel: '皮肤数',
+    fileSizeLabel: '文件大小',
+    downloadBtn: '下载皮肤包',
+    historyTitle: '最近生成',
+    historyClear: '清空',
+    logTitle: '系统运行日志',
+    logClear: '清空',
+    drawerTitle: '设置',
+    langSection: '语言 / Language',
+    langLabel: '界面语言',
+    displaySection: '显示',
+    fontStyleLabel: '字体风格', fontStyleHint: '系统 / MC 像素',
+    fontStyleSystem: '系统', fontStyleMC: '像素',
+    fontLabel: '字号', fontSmall: '小', fontNormal: '中', fontLarge: '大',
+    themeLabel: '主题', themeHint: '深色 / 浅色', themeDark: '深色', themeLight: '浅色',
+    animLabel: '背景动画 / 3D 自动旋转', animHint: '关闭可提升流畅度',
+    dataSection: '数据', resetBtn: '重置所有设置',
+    skinNamePlaceholder: '输入皮肤名称',
+    sizeOk: '尺寸合法', sizeWarn: '尺寸非法',
+    bodyTypeClassic: '粗臂', bodyTypeSlim: '细臂',
+    emptyList: '还没有皮肤，先上传几张吧',
+    noValidSkin: '请至少上传一张尺寸合法的皮肤',
+    noSkin: '请先上传皮肤',
+    preparing: '准备中…',
+    packing: '打包中…',
+    done: '完成！',
+    generatingManifest: '写入 manifest.json…',
+    generatingSkins: '写入 skins.json…',
+    generatingTextures: '写入皮肤贴图…',
+    generatingTexts: '写入语言文件…',
+    imgTooBig: '图片过大，请控制在 5MB 以内',
+    notImage: '不是有效的图片文件',
+    addedSkins: '已添加 {n} 张皮肤',
+    cleared: '已清空列表',
+    autoNamed: '已自动重命名',
+    resetConfirm: '确定要重置所有设置吗？',
+    clearConfirm: '确定要清空全部皮肤吗？',
+    historyClearConfirm: '清空所有历史记录？',
+    historyCount: '{n} 张',
+    downloadReady: '文件已开始下载',
+    zipError: 'ZIP 解压失败',
+    invalidSkinWarn: '有 {n} 张皮肤尺寸非法，已自动跳过',
+    drag3dHint: '拖动旋转 · 松手自动旋转',
+    logStart: '系统初始化完成，等待上传...',
+    logReceive: '接收到 {n} 个文件',
+    logZipStart: '正在解压 ZIP: {name}',
+    logZipDone: 'ZIP 解压完成，提取到 {n} 张图片',
+    logParseImg: '解析图片: {name} ({w}×{h})',
+    logParseErr: '无法解析图片: {name}',
+    logAddedSkins: '成功加载 {n} 张皮肤',
+    logRemoved: '移除了皮肤: {name}',
+    logBodyType: '皮肤 [{name}] 手臂类型切换为: {type}',
+    logGenerateStart: '开始生成皮肤包...',
+    logManifest: '生成 manifest.json (UUID: {uuid})',
+    logTex: '写入贴图: {name}',
+    logSkinsJson: '生成 skins.json，包含 {n} 个皮肤',
+    logLang: '生成语言文件 (zh_CN.lang / en_US.lang)',
+    logCompress: '正在压缩为 .mcpack 文件...',
+    logSuccess: '生成成功！文件大小: {size}',
+    logError: '生成失败: {msg}',
+    logDownload: '触发下载: {name}',
+    logSetting: '设置已更新: {key}',
+    logReset: '系统设置已重置'
+  },
+  en: {
+    title: 'MC Skin Pack Generator',
+    uploadText: 'Click or drag to upload PNG / ZIP',
+    uploadHint: 'Supports 64×64 · 64×32 · 128×128, batch OK',
+    batchChip: 'Batch',
+    f1: 'Batch upload', f2: 'Size check', f3: 'Classic / Slim', f4: 'Custom names', f5: '3D Preview',
+    skinListTitle: 'Skins',
+    autoName: 'Auto Name',
+    clearAll: 'Clear',
+    packSettingsTitle: 'Pack Info',
+    packNameLabel: 'Pack Name',
+    packDescLabel: 'Pack Description',
+    generateBtn: 'Generate Skin Pack',
+    resultTitle: 'Success!',
+    fileNameLabel: 'File',
+    skinCountLabel: 'Skins',
+    fileSizeLabel: 'Size',
+    downloadBtn: 'Download Pack',
+    historyTitle: 'Recent',
+    historyClear: 'Clear',
+    logTitle: 'System Log',
+    logClear: 'Clear',
+    drawerTitle: 'Settings',
+    langSection: 'Language',
+    langLabel: 'Language',
+    displaySection: 'Display',
+    fontStyleLabel: 'Font Style', fontStyleHint: 'System / MC Pixel',
+    fontStyleSystem: 'System', fontStyleMC: 'Pixel',
+    fontLabel: 'Font Size', fontSmall: 'S', fontNormal: 'M', fontLarge: 'L',
+    themeLabel: 'Theme', themeHint: 'Dark / Light', themeDark: 'Dark', themeLight: 'Light',
+    animLabel: 'Background Animation / 3D Spin', animHint: 'Disable for performance',
+    dataSection: 'Data', resetBtn: 'Reset All Settings',
+    skinNamePlaceholder: 'Skin name',
+    sizeOk: 'Valid', sizeWarn: 'Invalid',
+    bodyTypeClassic: 'Classic', bodyTypeSlim: 'Slim',
+    emptyList: 'No skins yet — upload some first',
+    noValidSkin: 'Upload at least one valid skin',
+    noSkin: 'Please upload skins first',
+    preparing: 'Preparing…',
+    packing: 'Packing…',
+    done: 'Done!',
+    generatingManifest: 'Writing manifest.json…',
+    generatingSkins: 'Writing skins.json…',
+    generatingTextures: 'Writing textures…',
+    generatingTexts: 'Writing language files…',
+    imgTooBig: 'Image too large (max 5MB)',
+    notImage: 'Not a valid image file',
+    addedSkins: '{n} skin(s) added',
+    cleared: 'List cleared',
+    autoNamed: 'Auto-named',
+    resetConfirm: 'Reset all settings?',
+    clearConfirm: 'Clear all skins?',
+    historyClearConfirm: 'Clear all history?',
+    historyCount: '{n} skins',
+    downloadReady: 'Download started',
+    zipError: 'Failed to extract ZIP',
+    invalidSkinWarn: '{n} invalid skin(s) skipped',
+    drag3dHint: 'Drag to rotate · Auto-spin when idle',
+    logStart: 'System initialized, waiting for upload...',
+    logReceive: 'Received {n} file(s)',
+    logZipStart: 'Extracting ZIP: {name}',
+    logZipDone: 'ZIP extracted, {n} image(s) found',
+    logParseImg: 'Parsing image: {name} ({w}×{h})',
+    logParseErr: 'Failed to parse image: {name}',
+    logAddedSkins: 'Successfully loaded {n} skin(s)',
+    logRemoved: 'Removed skin: {name}',
+    logBodyType: 'Skin [{name}] arm type changed to: {type}',
+    logGenerateStart: 'Starting skin pack generation...',
+    logManifest: 'Generated manifest.json (UUID: {uuid})',
+    logTex: 'Writing texture: {name}',
+    logSkinsJson: 'Generated skins.json with {n} skin(s)',
+    logLang: 'Generated language files (zh_CN.lang / en_US.lang)',
+    logCompress: 'Compressing to .mcpack...',
+    logSuccess: 'Success! File size: {size}',
+    logError: 'Generation failed: {msg}',
+    logDownload: 'Triggered download: {name}',
+    logSetting: 'Settings updated: {key}',
+    logReset: 'All settings reset'
+  }
+};
+
+/* ---------- 状态 ---------- */
+const SETTINGS_KEY = 'mcsp_settings_v3';
+const HISTORY_KEY  = 'mcsp_history_v3';
+
+const state = { skins: [], lang: 'zh', generating: false };
+let packBlob = null;
+let packFileName = '';
+let dragIndex = null;
+let logCount = 0;
+
+/* ---------- 工具 ---------- */
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const t = k => (I18N[state.lang] && I18N[state.lang][k]) || k;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+function uuid() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
+function dataURLToBytes(dataURL) {
+  const bin = atob(dataURL.split(',')[1]);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+function formatSize(bytes) {
+  if (!bytes) return '0 B';
+  const k = 1024, u = ['B','KB','MB','GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + u[i];
+}
+function sanitizeFileName(name) {
+  return (name || 'skin_pack').replace(/[\\/:*?"<>|]/g, '_').trim() || 'skin_pack';
+}
+function isAnimOn() {
+  return document.documentElement.getAttribute('data-anim') !== 'off';
+}
+
+/* ---------- Toast & Log ---------- */
+function toast(msg, type = '') {
+  const box = $('#toasts');
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  box.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+  setTimeout(() => {
+    el.classList.remove('show');
+    setTimeout(() => el.remove(), 320);
+  }, 2600);
+}
+
+function addLog(type, msg) {
+  const box = $('#logContent');
+  if (!box) return;
+
+  const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+  const el = document.createElement('div');
+  el.className = `log-line ${type.toLowerCase()}`;
+  el.innerHTML = `<span class="log-time">[${time}]</span><span class="log-type">[${type}]</span><span class="log-msg">${esc(msg)}</span>`;
+
+  box.appendChild(el);
+  box.scrollTop = box.scrollHeight;
+
+  logCount++;
+  // 限制日志数量防止卡顿
+  if (logCount > 100) {
+    box.removeChild(box.firstChild);
+    logCount--;
+  }
+}
+
+/* ============================================================
+   设置
+   ============================================================ */
+function loadSettings() {
+  try { return JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}'); }
+  catch { return {}; }
+}
+function saveSettings(patch) {
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify({ ...loadSettings(), ...patch })); }
+  catch {}
+}
+function applySettings() {
+  const s = loadSettings();
+  state.lang = s.lang || 'zh';
+
+  const html = document.documentElement;
+  html.setAttribute('data-fontstyle', s.fontstyle || 'system');
+  html.setAttribute('data-fontsize', s.fontsize || 'normal');
+  html.setAttribute('data-theme', s.theme || 'dark');
+  html.setAttribute('data-anim', s.anim === false ? 'off' : 'on');
+  html.setAttribute('lang', state.lang === 'zh' ? 'zh-CN' : 'en');
+
+  $$('[data-lang]').forEach(b => b.classList.toggle('active', b.dataset.lang === state.lang));
+  $$('[data-fontstyle]').forEach(b => b.classList.toggle('active', b.dataset.fontstyle === (s.fontstyle || 'system')));
+  $$('[data-font]').forEach(b => b.classList.toggle('active', b.dataset.font === (s.fontsize || 'normal')));
+  $$('[data-theme]').forEach(b => b.classList.toggle('active', b.dataset.theme === (s.theme || 'dark')));
+  $('#optAnimation').checked = s.anim !== false;
+
+  applyI18n();
+  renderSkinList();
+}
+function applyI18n() {
+  $$('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const txt = t(key);
+    if (txt && el.textContent !== txt) el.textContent = txt;
+  });
+}
+
+/* ============================================================
+   2D 预览
+   ============================================================ */
+function renderSkinPreview(canvas, img, bodyType) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  ctx.imageSmoothingEnabled = false;
+  if (!img || !img.naturalWidth) return;
+
+  const S = W / 16;
+  const sc = img.naturalWidth >= 128 ? 2 : 1;
+  const legacy = img.naturalHeight <= 32;
+  const slim = bodyType === 'slim';
+
+  const blit = (sx, sy, sw, sh, ux, uy, uw, uh) => {
+    ctx.drawImage(img, sx * sc, sy * sc, sw * sc, sh * sc, ux * S, uy * S, uw * S, uh * S);
+  };
+
+  blit(44, 20, 4, 12, 0, 8, 4, 12);
+  blit(legacy ? 44 : 36, legacy ? 20 : 52, 4, 12, 12, 8, 4, 12);
+  blit(4, 20, 4, 12, 4, 20, 4, 12);
+  blit(legacy ? 4 : 20, legacy ? 20 : 52, 4, 12, 8, 20, 4, 12);
+  blit(20, 20, 8, 12, 4, 8, 8, 12);
+  blit(8, 8, 8, 8, 4, 0, 8, 8);
+  blit(40, 8, 8, 8, 4, 0, 8, 8);
+
+  if (slim) {
+    ctx.clearRect(3 * S, 8 * S, 1 * S, 12 * S);
+    ctx.clearRect(12 * S, 8 * S, 1 * S, 12 * S);
+  }
+}
+
+/* ============================================================
+   3D 预览 · UV 定义 (64×64 基准)
+   ============================================================ */
+const UV = {
+  head: {
+    front:[8,8,8,8], back:[24,8,8,8], right:[0,8,8,8], left:[16,8,8,8],
+    top:[8,0,8,8], bottom:[16,0,8,8]
+  },
+  hat: {
+    front:[40,8,8,8], back:[56,8,8,8], right:[32,8,8,8], left:[48,8,8,8],
+    top:[40,0,8,8], bottom:[48,0,8,8]
+  },
+  body: {
+    front:[20,20,8,12], back:[32,20,8,12], right:[16,20,4,12], left:[28,20,4,12],
+    top:[20,16,8,4], bottom:[28,16,8,4]
+  },
+  rarm: {
+    front:[44,20,4,12], back:[52,20,4,12], right:[40,20,4,12], left:[48,20,4,12],
+    top:[44,16,4,4], bottom:[48,16,4,4]
+  },
+  larm: {
+    front:[36,52,4,12], back:[44,52,4,12], right:[32,52,4,12], left:[40,52,4,12],
+    top:[36,48,4,4], bottom:[40,48,4,4]
+  },
+  rleg: {
+    front:[4,20,4,12], back:[12,20,4,12], right:[0,20,4,12], left:[8,20,4,12],
+    top:[4,16,4,4], bottom:[8,16,4,4]
+  },
+  lleg: {
+    front:[20,52,4,12], back:[28,52,4,12], right:[16,52,4,12], left:[24,52,4,12],
+    top:[20,48,4,4], bottom:[24,48,4,4]
+  }
+};
+
+function cropFaceDataURL(img, uv, scale, flip, overlayUV) {
+  const [u, v, w, h] = uv;
+  const exportScale = 16; 
+  const c = document.createElement('canvas');
+  c.width = w * exportScale;
+  c.height = h * exportScale;
+  const ctx = c.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  
+  if (flip) { 
+    ctx.translate(w * exportScale, 0); 
+    ctx.scale(-1, 1); 
+  }
+  
+  ctx.drawImage(img, u * scale, v * scale, w * scale, h * scale, 0, 0, w * exportScale, h * exportScale);
+  
+  if (overlayUV) {
+    const [ou, ov] = overlayUV;
+    ctx.drawImage(img, ou * scale, ov * scale, w * scale, h * scale, 0, 0, w * exportScale, h * exportScale);
+  }
+  return c.toDataURL();
+}
+
+/* ============================================================
+   3D 预览 · 构建器
+   ============================================================ */
+function create3DViewer(skin) {
+  const U = 6; 
+  const img = skin.img;
+  const scale = img.naturalWidth >= 128 ? 2 : 1;
+  const legacy = img.naturalHeight <= 32;
+  const isSlim = skin.bodyType === 'slim';
+
+  const PART_DEFS = [
+    { key:'head', w:8, h:8,  d:8, x:0,  y:-12, z:0, uv:UV.head, overlay:UV.hat },
+    { key:'body', w:8, h:12, d:4, x:0,  y:-2,  z:0, uv:UV.body },
+    { key:'rarm', w:isSlim ? 3 : 4, h:12, d:4, x:isSlim ? -5.5 : -6, y:-2, z:0, uv:UV.rarm },
+    { key:'larm', w:isSlim ? 3 : 4, h:12, d:4, x:isSlim ? 5.5 : 6, y:-2, z:0, uv:UV.larm, legacyUv:UV.rarm, legacyFlip:true },
+    { key:'rleg', w:4, h:12, d:4, x:-2, y:10, z:0, uv:UV.rleg },
+    { key:'lleg', w:4, h:12, d:4, x:2,  y:10, z:0, uv:UV.lleg, legacyUv:UV.rleg, legacyFlip:true }
+  ];
+
+  const stage = document.createElement('div');
+  stage.className = 'p3d-stage';
+  stage.draggable = false;
+
+  const model = document.createElement('div');
+  model.className = 'p3d-model';
+  stage.appendChild(model);
+
+  let rotX = skin._rotX ?? -8;
+  let rotY = skin._rotY ?? 24;
+
+  const applyRotation = () => {
+    model.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+  };
+
+  PART_DEFS.forEach(def => {
+    const part = document.createElement('div');
+    part.className = 'p3d-part';
+    part.style.transform = `translate3d(${def.x * U}px, ${def.y * U}px, ${def.z * U}px)`;
+
+    const useLegacy = legacy && def.legacyUv;
+    const uvSet = useLegacy ? def.legacyUv : def.uv;
+    const flip = !!(legacy && def.legacyFlip);
+
+    ['front', 'back', 'left', 'right', 'top', 'bottom'].forEach(key => {
+      const uv = uvSet[key];
+      if (!uv) return;
+
+      const overlayUV = def.overlay ? def.overlay[key] : null;
+      const dataUrl = cropFaceDataURL(img, uv, scale, flip, overlayUV);
+
+      let fw, fh, tf;
+      const hw = def.w / 2 * U, hh = def.h / 2 * U, hd = def.d / 2 * U;
+      switch (key) {
+        case 'front':  fw = def.w; fh = def.h; tf = `translateZ(${hd}px)`; break;
+        case 'back':   fw = def.w; fh = def.h; tf = `rotateY(180deg) translateZ(${hd}px)`; break;
+        case 'right':  fw = def.d; fh = def.h; tf = `rotateY(-90deg) translateZ(${hw}px)`; break;
+        case 'left':   fw = def.d; fh = def.h; tf = `rotateY(90deg) translateZ(${hw}px)`; break;
+        case 'top':    fw = def.w; fh = def.d; tf = `rotateX(90deg) translateZ(${hh}px)`; break;
+        case 'bottom': fw = def.w; fh = def.d; tf = `rotateX(-90deg) translateZ(${hh}px)`; break;
+      }
+
+      const face = document.createElement('div');
+      face.className = 'p3d-face';
+      face.dataset.face = key;
+      face.style.width  = (fw * U) + 'px';
+      face.style.height = (fh * U) + 'px';
+      face.style.marginLeft = (-fw * U / 2) + 'px';
+      face.style.marginTop  = (-fh * U / 2) + 'px';
+      face.style.transform = tf;
+      face.style.backgroundImage = `url("${dataUrl}")`;
+      part.appendChild(face);
+    });
+
+    model.appendChild(part);
+  });
+
+  applyRotation();
+
+  let dragging = false, lastX = 0, lastY = 0;
+
+  const onDown = e => {
+    dragging = true;
+    lastX = e.clientX;
+    lastY = e.clientY;
+    stage.classList.add('grabbing');
+    try { stage.setPointerCapture(e.pointerId); } catch {}
+    e.stopPropagation();
+  };
+  const onMove = e => {
+    if (!dragging) return;
+    const dx = e.clientX - lastX;
+    const dy = e.clientY - lastY;
+    lastX = e.clientX;
+    lastY = e.clientY;
+    rotY += dx * 0.6;
+    rotX -= dy * 0.6;
+    rotX = Math.max(-70, Math.min(70, rotX));
+    skin._rotX = rotX;
+    skin._rotY = rotY;
+    applyRotation();
+    e.preventDefault();
+  };
+  const onUp = () => { dragging = false; stage.classList.remove('grabbing'); };
+
+  stage.addEventListener('pointerdown', onDown);
+  stage.addEventListener('pointermove', onMove);
+  stage.addEventListener('pointerup', onUp);
+  stage.addEventListener('pointercancel', onUp);
+  stage.addEventListener('dragstart', e => e.preventDefault());
+
+  let rafId = null;
+  let running = true;
+  const loop = () => {
+    if (!running) return;
+    if (isAnimOn() && !dragging) {
+      rotY += 0.35;
+      skin._rotY = rotY;
+      applyRotation();
+    }
+    rafId = requestAnimationFrame(loop);
+  };
+  rafId = requestAnimationFrame(loop);
+
+  const hint = document.createElement('div');
+  hint.className = 'p3d-hint';
+  hint.textContent = t('drag3dHint');
+  stage.appendChild(hint);
+
+  const stop = () => {
+    running = false;
+    if (rafId) cancelAnimationFrame(rafId);
+  };
+
+  return { element: stage, stop };
+}
+
+function toggle3D(skin, card) {
+  const box = card.querySelector('.skin-card-3d');
+  const btn = card.querySelector('.cube-btn');
+  if (!box || !btn) return;
+
+  if (skin.expanded3d) {
+    skin.expanded3d = false;
+    box.classList.remove('show');
+    box.innerHTML = '';
+    btn.classList.remove('active');
+    if (skin._3dStop) { skin._3dStop(); skin._3dStop = null; }
+  } else {
+    skin.expanded3d = true;
+    btn.classList.add('active');
+    box.classList.add('show');
+    box.innerHTML = '';
+    const viewer = create3DViewer(skin);
+    box.appendChild(viewer.element);
+    skin._3dStop = viewer.stop;
+  }
+}
+
+/* ============================================================
+   文件读取
+   ============================================================ */
+function fileToImage(file) {
+  return new Promise((resolve, reject) => {
+    if (file.size > 5 * 1024 * 1024) {
+      addLog('WARN', t('imgTooBig') + ` (${file.name})`);
+      toast(t('imgTooBig'), 'warn');
+      return reject(new Error('too big'));
+    }
+    const reader = new FileReader();
+    reader.onload = e => {
+      const dataUrl = e.target.result;
+      const img = new Image();
+      img.onload = () => resolve({ dataUrl, img });
+      img.onerror = () => reject(new Error('bad image'));
+      img.src = dataUrl;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function addSkinFromFile(file) {
+  const { dataUrl, img } = await fileToImage(file);
+  const w = img.naturalWidth, h = img.naturalHeight;
+  const valid = (w === 64 && h === 64) || (w === 128 && h === 128) || (w === 64 && h === 32);
+  
+  addLog(valid ? 'INFO' : 'WARN', t('logParseImg').replace('{name}', file.name).replace('{w}', w).replace('{h}', h));
+  
+  state.skins.push({
+    id: 'sk_' + Math.random().toString(36).slice(2, 9),
+    dataUrl, img, width: w, height: h, valid,
+    name: file.name.replace(/\.[^/.]+$/, ''),
+    bodyType: 'classic',
+    expanded3d: false
+  });
+}
+
+async function handleFiles(files) {
+  const arr = Array.from(files);
+  addLog('INFO', t('logReceive').replace('{n}', arr.length));
+  let added = 0;
+
+  for (const file of arr) {
+    const lower = file.name.toLowerCase();
+    if (lower.endsWith('.zip')) {
+      addLog('INFO', t('logZipStart').replace('{name}', file.name));
+      try {
+        const zip = await JSZip.loadAsync(file);
+        const paths = Object.keys(zip.files).filter(p =>
+          p.toLowerCase().endsWith('.png') &&
+          !zip.files[p].dir &&
+          !p.includes('__MACOSX') &&
+          !p.split('/').pop().startsWith('.')
+        );
+        addLog('INFO', t('logZipDone').replace('{n}', paths.length));
+        for (const p of paths) {
+          const blob = await zip.file(p).async('blob');
+          const name = p.split('/').pop();
+          try {
+            await addSkinFromFile(new File([blob], name, { type: 'image/png' }));
+            added++;
+          } catch {}
+        }
+      } catch (e) {
+        console.error(e);
+        addLog('ERROR', t('zipError') + ` (${file.name})`);
+        toast(t('zipError'), 'bad');
+      }
+    } else if (file.type.startsWith('image/') || lower.endsWith('.png')) {
+      try { await addSkinFromFile(file); added++; } catch {}
+    }
+  }
+
+  renderSkinList();
+  if (added) {
+    addLog('SUCCESS', t('logAddedSkins').replace('{n}', added));
+    toast(t('addedSkins').replace('{n}', added), 'ok');
+  }
+}
+
+/* ============================================================
+   列表渲染
+   ============================================================ */
+function updateGenerateBtn() {
+  const valid = state.skins.filter(s => s.valid).length;
+  $('#generateBtn').disabled = valid === 0 || state.generating;
+}
+
+const CUBE_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  <path d="M12 2.5 21 7.5v9L12 21.5 3 16.5v-9z"/>
+  <path d="M3 7.5l9 5 9-5"/>
+  <path d="M12 12.5v9"/>
+</svg>`;
+
+function renderSkinList() {
+  state.skins.forEach(s => { if (s._3dStop) { s._3dStop(); s._3dStop = null; } });
+
+  const list = $('#skinsList');
+  list.innerHTML = '';
+  $('#skinCount').textContent = state.skins.length;
+  updateGenerateBtn();
+
+  if (!state.skins.length) {
+    list.innerHTML = `<div class="empty">
+      <div class="empty-icon">🖼</div>
+      <p>${t('emptyList')}</p>
+    </div>`;
+    return;
+  }
+
+  state.skins.forEach((skin, i) => {
+    const card = document.createElement('div');
+    card.className = 'skin-card' + (skin.valid ? '' : ' invalid');
+    card.draggable = true;
+    card.dataset.index = i;
+
+    card.innerHTML = `
+      <div class="skin-card-main">
+        <div class="drag-handle" title="拖动排序">⠿</div>
+        <div class="preview-wrap"><canvas class="skin-preview" width="64" height="128"></canvas></div>
+        <div class="skin-info">
+          <input class="skin-name" type="text" maxlength="48"
+                 value="${esc(skin.name)}" placeholder="${t('skinNamePlaceholder')}">
+          <div class="skin-tags">
+            <span class="tag ${skin.valid ? 'ok' : 'bad'}">${skin.width}×${skin.height}</span>
+            <span class="tag ${skin.valid ? 'ok' : 'bad'}">${skin.valid ? t('sizeOk') : t('sizeWarn')}</span>
+          </div>
+          <div class="segmented small">
+            <button data-type="classic" class="${skin.bodyType === 'classic' ? 'active' : ''}">${t('bodyTypeClassic')}</button>
+            <button data-type="slim" class="${skin.bodyType === 'slim' ? 'active' : ''}">${t('bodyTypeSlim')}</button>
+          </div>
+        </div>
+        <div class="skin-actions">
+          <button class="cube-btn ${skin.expanded3d ? 'active' : ''}" title="3D 预览">${CUBE_SVG}</button>
+          <button class="remove-btn" title="移除">✕</button>
+        </div>
+      </div>
+      <div class="skin-card-3d"></div>
+    `;
+
+    renderSkinPreview(card.querySelector('canvas'), skin.img, skin.bodyType);
+
+    const nameInput = card.querySelector('.skin-name');
+    nameInput.addEventListener('input', e => { skin.name = e.target.value; });
+    nameInput.addEventListener('dragstart', e => e.preventDefault());
+
+    card.querySelectorAll('.segmented button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (skin.bodyType === btn.dataset.type) return;
+        skin.bodyType = btn.dataset.type;
+        addLog('INFO', t('logBodyType').replace('{name}', skin.name || '未命名').replace('{type}', btn.dataset.type === 'slim' ? t('bodyTypeSlim') : t('bodyTypeClassic')));
+        card.querySelectorAll('.segmented button').forEach(b =>
+          b.classList.toggle('active', b.dataset.type === skin.bodyType));
+        renderSkinPreview(card.querySelector('canvas'), skin.img, skin.bodyType);
+        if (skin.expanded3d) {
+          const box = card.querySelector('.skin-card-3d');
+          if (skin._3dStop) skin._3dStop();
+          box.innerHTML = '';
+          const viewer = create3DViewer(skin);
+          box.appendChild(viewer.element);
+          skin._3dStop = viewer.stop;
+        }
+      });
+    });
+
+    card.querySelector('.cube-btn').addEventListener('click', e => {
+      e.stopPropagation();
+      toggle3D(skin, card);
+    });
+
+    card.querySelector('.remove-btn').addEventListener('click', () => {
+      if (skin._3dStop) { skin._3dStop(); skin._3dStop = null; }
+      addLog('INFO', t('logRemoved').replace('{name}', skin.name));
+      state.skins = state.skins.filter(s => s.id !== skin.id);
+      renderSkinList();
+    });
+
+    card.addEventListener('dragstart', e => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' ||
+          e.target.closest('.skin-card-3d') || e.target.closest('.p3d-stage')) {
+        e.preventDefault(); return;
+      }
+      dragIndex = i;
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      try { e.dataTransfer.setData('text/plain', String(i)); } catch {}
+    });
+    card.addEventListener('dragend', () => {
+      card.classList.remove('dragging');
+      $$('.skin-card').forEach(c => c.classList.remove('drag-over'));
+      dragIndex = null;
+    });
+    card.addEventListener('dragover', e => {
+      e.preventDefault();
+      if (dragIndex === null || dragIndex === i) return;
+      card.classList.add('drag-over');
+    });
+    card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+    card.addEventListener('drop', e => {
+      e.preventDefault();
+      card.classList.remove('drag-over');
+      if (dragIndex === null || dragIndex === i) return;
+      const [moved] = state.skins.splice(dragIndex, 1);
+      state.skins.splice(i, 0, moved);
+      dragIndex = null;
+      renderSkinList();
+    });
+
+    list.appendChild(card);
+
+    if (skin.expanded3d) {
+      toggle3D(skin, card);
+    }
+  });
+}
+
+/* ============================================================
+   打包
+   ============================================================ */
+function makePackIcon(img) {
+  return new Promise(resolve => {
+    const c = document.createElement('canvas');
+    c.width = 128; c.height = 128;
+    const ctx = c.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+
+    const g = ctx.createLinearGradient(0, 0, 128, 128);
+    g.addColorStop(0, '#1b2432');
+    g.addColorStop(1, '#0d1219');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 128, 128);
+
+    const sc = img.naturalWidth >= 128 ? 2 : 1;
+    ctx.drawImage(img, 8 * sc, 8 * sc, 8 * sc, 8 * sc, 16, 16, 96, 96);
+
+    c.toBlob(b => resolve(b), 'image/png');
+  });
+}
+
+async function buildPack(validSkins, onProgress) {
+  const zip = new JSZip();
+  const packName = ($('#packNameInput').value.trim() || 'My Skin Pack');
+  const packDesc = ($('#packDescInput').value.trim() || 'Generated by MC Skin Pack Generator');
+  const serializeName = 'skins_' + Math.random().toString(36).slice(2, 9);
+  const packUUID = uuid();
+  const moduleUUID = uuid();
+
+  addLog('INFO', t('logGenerateStart'));
+  onProgress(8, t('preparing'));
+  
+  try {
+    const icon = await makePackIcon(validSkins[0].img);
+    if (icon) zip.file('pack_icon.png', icon);
+  } catch {}
+
+  onProgress(18, t('generatingManifest'));
+  addLog('INFO', t('logManifest').replace('{uuid}', packUUID.split('-')[0] + '...'));
+  zip.file('manifest.json', JSON.stringify({
+    format_version: 2,
+    header: {
+      name: 'pack.name',
+      description: 'pack.description',
+      uuid: packUUID,
+      version: [1, 0, 0],
+      min_engine_version: [1, 16, 0]
+    },
+    modules: [
+      { type: 'skin_pack', uuid: moduleUUID, version: [1, 0, 0] }
+    ]
+  }, null, 2));
+
+  const skinsJson = {
+    serialize_name: serializeName,
+    localization_name: 'pack.name',
+    skins: []
+  };
+  const langLines = [];
+
+  for (let i = 0; i < validSkins.length; i++) {
+    const skin = validSkins[i];
+    const skinId = 'skin_' + String(i + 1).padStart(2, '0');
+    const texName = skinId + '.png';
+
+    zip.file(texName, dataURLToBytes(skin.dataUrl));
+    addLog('INFO', t('logTex').replace('{name}', texName));
+
+    skinsJson.skins.push({
+      localization_name: skinId,
+      geometry: skin.bodyType === 'slim'
+        ? 'geometry.humanoid.customSlim'
+        : 'geometry.humanoid.custom',
+      texture: texName,
+      type: 'free'
+    });
+
+    langLines.push(`skin.${serializeName}.${skinId}=${(skin.name || skinId).trim()}`);
+
+    if (i % 3 === 0) {
+      onProgress(25 + (i / validSkins.length) * 45, t('generatingTextures'));
+      await sleep(0);
+    }
+  }
+
+  onProgress(72, t('generatingSkins'));
+  addLog('INFO', t('logSkinsJson').replace('{n}', validSkins.length));
+  zip.file('skins.json', JSON.stringify(skinsJson, null, 2));
+
+  onProgress(82, t('generatingTexts'));
+  addLog('INFO', t('logLang'));
+  const langContent = [
+    `pack.name=${packName}`,
+    `pack.description=${packDesc}`,
+    '',
+    ...langLines
+  ].join('\n');
+
+  zip.file('texts/zh_CN.lang', langContent);
+  zip.file('texts/en_US.lang', langContent);
+  zip.file('texts/languages.json', JSON.stringify(['zh_CN', 'en_US'], null, 2));
+
+  onProgress(88, t('packing'));
+  addLog('INFO', t('logCompress'));
+  const blob = await zip.generateAsync(
+    { type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } },
+    meta => onProgress(88 + meta.percent * 0.11, t('packing'))
+  );
+
+  return { blob, packName, count: validSkins.length };
+}
+
+/* ============================================================
+   生成流程
+   ============================================================ */
+function setProgress(p, text) {
+  $('#progressFill').style.width = Math.min(100, p) + '%';
+  $('#progressText').textContent = text || '';
+}
+function showProgress(show) {
+  $('#progressWrap').classList.toggle('show', show);
+}
+
+async function doGenerate() {
+  if (state.generating) return;
+
+  const valid = state.skins.filter(s => s.valid);
+  const invalidCount = state.skins.length - valid.length;
+
+  if (!valid.length) { toast(t('noValidSkin'), 'warn'); return; }
+  if (invalidCount > 0) {
+    addLog('WARN', t('invalidSkinWarn').replace('{n}', invalidCount));
+    toast(t('invalidSkinWarn').replace('{n}', invalidCount), 'warn');
+  }
+
+  state.generating = true;
+  updateGenerateBtn();
+  showProgress(true);
+  setProgress(1, t('preparing'));
+  $('#resultBox').classList.remove('show');
+
+  try {
+    const { blob, packName, count } = await buildPack(valid, setProgress);
+
+    packBlob = blob;
+    packFileName = sanitizeFileName(packName) + '.mcpack';
+
+    setProgress(100, t('done'));
+    await sleep(320);
+
+    $('#resultFileName').textContent = packFileName;
+    $('#resultSkinCount').textContent = t('historyCount').replace('{n}', count);
+    $('#resultSize').textContent = formatSize(blob.size);
+    $('#resultBox').classList.add('show');
+
+    addLog('SUCCESS', t('logSuccess').replace('{size}', formatSize(blob.size)));
+    saveHistory(packName, count, blob.size);
+    toast(t('resultTitle'), 'ok');
+
+    setTimeout(() => {
+      $('#resultBox').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 120);
+  } catch (e) {
+    console.error(e);
+    addLog('ERROR', t('logError').replace('{msg}', e.message || e));
+    toast('❌ ' + (e.message || e), 'bad');
+  } finally {
+    state.generating = false;
+    updateGenerateBtn();
+    setTimeout(() => { showProgress(false); setProgress(0, ''); }, 700);
+  }
+}
+
+/* ============================================================
+   历史记录
+   ============================================================ */
+function loadHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); }
+  catch { return []; }
+}
+function saveHistory(name, count, size) {
+  let list = loadHistory();
+  list = list.filter(h => !(h.name === name && h.size === size));
+  list.unshift({ name, count, size, time: Date.now() });
+  if (list.length > 12) list = list.slice(0, 12);
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify(list)); } catch {}
+  renderHistory();
+}
+function renderHistory() {
+  const list = loadHistory();
+  const panel = $('#historyPanel');
+  if (!list.length) { panel.classList.remove('show'); return; }
+  panel.classList.add('show');
+
+  const box = $('#historyList');
+  box.innerHTML = '';
+
+  list.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'history-item';
+    const time = new Date(item.time).toLocaleString(
+      state.lang === 'zh' ? 'zh-CN' : 'en-US',
+      { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }
+    );
+    div.innerHTML = `
+      <div class="hi">
+        <div class="hn">${esc(item.name)}</div>
+        <div class="ht">${time} · ${formatSize(item.size)}</div>
+      </div>
+      <div class="hb">${t('historyCount').replace('{n}', item.count)}</div>
+    `;
+    div.addEventListener('click', () => {
+      $('#packNameInput').value = item.name;
+      toast('📦 ' + item.name);
+    });
+    box.appendChild(div);
+  });
+}
+
+/* ============================================================
+   事件绑定
+   ============================================================ */
+function bindEvents() {
+  const fileInput = $('#fileInput');
+  const uploadZone = $('#uploadZone');
+
+  fileInput.addEventListener('change', e => {
+    if (e.target.files.length) handleFiles(e.target.files);
+    fileInput.value = '';
+  });
+
+  ['dragenter', 'dragover'].forEach(ev =>
+    uploadZone.addEventListener(ev, e => {
+      e.preventDefault(); uploadZone.classList.add('dragging');
+    }));
+  ['dragleave', 'drop'].forEach(ev =>
+    uploadZone.addEventListener(ev, e => {
+      e.preventDefault(); uploadZone.classList.remove('dragging');
+    }));
+  uploadZone.addEventListener('drop', e => {
+    const files = e.dataTransfer.files;
+    if (files && files.length) handleFiles(files);
+  });
+
+  $('#autoNameBtn').addEventListener('click', () => {
+    if (!state.skins.length) { toast(t('noSkin'), 'warn'); return; }
+    const base = state.lang === 'zh' ? '皮肤' : 'Skin';
+    state.skins.forEach((s, i) => { s.name = `${base} ${i + 1}`; });
+    renderSkinList();
+    addLog('INFO', t('autoNamed'));
+    toast(t('autoNamed'), 'ok');
+  });
+
+  $('#clearAllBtn').addEventListener('click', () => {
+    if (!state.skins.length) return;
+    if (confirm(t('clearConfirm'))) {
+      state.skins.forEach(s => { if (s._3dStop) s._3dStop(); });
+      state.skins = [];
+      renderSkinList();
+      $('#resultBox').classList.remove('show');
+      packBlob = null;
+      addLog('INFO', t('cleared'));
+      toast(t('cleared'), 'ok');
+    }
+  });
+
+  $('#generateBtn').addEventListener('click', doGenerate);
+
+  $('#downloadBtn').addEventListener('click', () => {
+    if (!packBlob) { toast(t('noSkin'), 'warn'); return; }
+    const url = URL.createObjectURL(packBlob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = packFileName || 'skin_pack.mcpack';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 150);
+    addLog('INFO', t('logDownload').replace('{name}', packFileName));
+    toast(t('downloadReady'), 'ok');
+  });
+
+  $('#historyClearBtn').addEventListener('click', () => {
+    if (confirm(t('historyClearConfirm'))) {
+      localStorage.removeItem(HISTORY_KEY);
+      renderHistory();
+    }
+  });
+
+  $('#logClearBtn').addEventListener('click', () => {
+    const box = $('#logContent');
+    if (box) box.innerHTML = '';
+    logCount = 0;
+  });
+
+  const overlay = $('#settingsOverlay');
+  const drawer = $('#settingsDrawer');
+  const openDrawer = () => { overlay.classList.add('show'); drawer.classList.add('show'); };
+  const closeDrawer = () => { overlay.classList.remove('show'); drawer.classList.remove('show'); };
+
+  $('#openSettingsBtn').addEventListener('click', openDrawer);
+  $('#closeSettingsBtn').addEventListener('click', closeDrawer);
+  overlay.addEventListener('click', closeDrawer);
+
+  $$('[data-lang]').forEach(b => b.addEventListener('click', () => {
+    saveSettings({ lang: b.dataset.lang }); applySettings(); renderHistory();
+    addLog('INFO', t('logSetting').replace('{key}', 'Language -> ' + b.dataset.lang));
+  }));
+  $$('[data-fontstyle]').forEach(b => b.addEventListener('click', () => {
+    saveSettings({ fontstyle: b.dataset.fontstyle }); applySettings();
+  }));
+  $$('[data-font]').forEach(b => b.addEventListener('click', () => {
+    saveSettings({ fontsize: b.dataset.font }); applySettings();
+  }));
+  $$('[data-theme]').forEach(b => b.addEventListener('click', () => {
+    saveSettings({ theme: b.dataset.theme }); applySettings();
+  }));
+  $('#optAnimation').addEventListener('change', e => {
+    saveSettings({ anim: e.target.checked }); applySettings();
+  });
+  $('#resetSettingsBtn').addEventListener('click', () => {
+    if (confirm(t('resetConfirm'))) {
+      localStorage.removeItem(SETTINGS_KEY);
+      applySettings();
+      renderHistory();
+      closeDrawer();
+      addLog('INFO', t('logReset'));
+      toast(t('resetBtn'), 'ok');
+    }
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeDrawer();
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      if (!$('#generateBtn').disabled) doGenerate();
+    }
+  });
+
+  ['dragover', 'drop'].forEach(ev =>
+    window.addEventListener(ev, e => {
+      if (!e.target.closest('#uploadZone')) e.preventDefault();
+    }));
+}
+
+/* ============================================================
+   启动
+   ============================================================ */
+bindEvents();
+applySettings();
+renderHistory();
+renderSkinList();
+setTimeout(() => addLog('INFO', t('logStart')), 500);
+</script>
+</body>
+</html>
